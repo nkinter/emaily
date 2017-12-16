@@ -24,23 +24,19 @@ passport.use(new GoogleStrategy({
         clientSecret: privateKeys.googleClientSecret,
         callbackURL: '/auth/google/callback',
         proxy: true
-    }, function(accessToken, refreshToken, profile, done){
-        User.findOne({ googleId: profile.id })
-            .then(existingUser => {
-                if (existingUser) {
-                    // User Found
-                    done(null, existingUser);
-                } else {
-                    // Create New User
-                    new User({
-                        googleId: profile.id,
-                        firstName: profile.name.familyName,
-                        lastName: profile.name.givenName,
-                        gender: profile.gender
-                    })
-                        .save()
-                        .then(user => done(null, user));
-                }
-        });
+    }, async function(accessToken, refreshToken, profile, done){
+        const existingUser = await User.findOne({ googleId: profile.id });
+
+        if (existingUser) {
+            return done(null, existingUser);
+        }
+
+        const user = await new User({
+            googleId: profile.id,
+            firstName: profile.name.familyName,
+            lastName: profile.name.givenName,
+            gender: profile.gender
+        }).save()
+        done(null, user);
     })
 );
